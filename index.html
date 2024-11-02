@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Real-Time Image Sharing</title>
+    <!-- <link rel="stylesheet" href="styles.css"> -->
+    <script src="https://www.gstatic.com/firebasejs/9.6.8/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.8/firebase-database.js"></script>
+    </head>
+    <style>
+        body {
+        font-family: Arial, sans-serif;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+        margin: 0;
+        background-color: #f7f7f7;
+        }
+
+        .container {
+        text-align: center;
+        padding: 20px;
+        background: #fff;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        border-radius: 8px;
+        }
+
+        .shared-image {
+        max-width: 100%;
+        margin-top: 10px;
+        border-radius: 8px;
+        }
+
+    </style>
+    <body>
+
+    <div class="container">
+    <h2>Image Sharing</h2>
+    
+    <!-- Image Upload for User -->
+    <input type="file" id="imageInput" accept="image/*" />
+    <button onclick="uploadImage()">Share Image</button>
+    
+    <h3>Received Images</h3>
+    <div id="receivedImages"></div>
+    </div>
+
+    <script>
+    // Firebase configuration
+    const firebaseConfig = {
+        apiKey: "YOUR_API_KEY",
+        authDomain: "YOUR_AUTH_DOMAIN",
+        databaseURL: "YOUR_DATABASE_URL",
+        projectId: "YOUR_PROJECT_ID",
+        storageBucket: "YOUR_STORAGE_BUCKET",
+        messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
+        appId: "YOUR_APP_ID"
+    };
+
+    // Initialize Firebase
+    const app = firebase.initializeApp(firebaseConfig);
+    const database = firebase.database();
+
+    const userId = prompt("Enter your user ID (e.g., user1 or user2):");
+
+    function uploadImage() {
+        const fileInput = document.getElementById("imageInput");
+        const file = fileInput.files[0];
+
+        if (!file) {
+        alert("Please select an image to share.");
+        return;
+        }
+
+        const reader = new FileReader();
+        reader.onload = function(event) {
+        const imageData = event.target.result;
+
+        // Save image to Firebase
+        const otherUserId = userId === "user1" ? "user2" : "user1";
+        database.ref("images/" + otherUserId).set({
+            image: imageData
+        });
+        };
+
+        reader.readAsDataURL(file);
+    }
+
+    // Listen for new images from the other user
+    const otherUserId = userId === "user1" ? "user2" : "user1";
+    database.ref("images/" + userId).on("value", (snapshot) => {
+        const data = snapshot.val();
+        if (data && data.image) {
+        displayImage(data.image);
+        }
+    });
+
+    function displayImage(imageData) {
+        const receivedImagesDiv = document.getElementById("receivedImages");
+        const img = document.createElement("img");
+        img.src = imageData;
+        img.className = "shared-image";
+        receivedImagesDiv.appendChild(img);
+    }
+    </script>
+
+    </body>
+</html>
